@@ -20,7 +20,7 @@ def init():
     except FileExistsError:
         return f"A ugit repository already exists in {os.getcwd()}"
 
-def hash_object(data):
+def hash_object(data, type_="blob"):
     """
     Hashes a given file and stores it in .ugit/objects/
 
@@ -30,12 +30,13 @@ def hash_object(data):
     Returns:
         oid - str: the object id of the hashed file
     """
+    obj = type_.encode() + b'\x00' + data
     oid = hashlib.sha1(data).hexdigest()
     with open(f"{GIT_DIR}/objects/{oid}", "wb") as out:
-        out.write(data)
+        out.write(obj)
     return oid
 
-def get_object(oid):
+def get_object(oid, expected="blob"):
     """
     Returns the contents of a hashed object
 
@@ -46,4 +47,12 @@ def get_object(oid):
         str: the contents of the hashed file
     """
     with open(f"{GIT_DIR}/objects/{oid}", "rb") as f:
-        return f.read()
+        obj = f.read()
+
+    type_, _, content = obj.partition(b'\x00')
+    type_ = type_.decode()
+
+    if expected is not None:
+        assert type_ == expected, f'Expected {expected}, got {type_}'
+
+    return content
