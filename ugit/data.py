@@ -36,7 +36,7 @@ def hash_object(data, type_="blob"):
         out.write(obj)
     return oid
 
-def get_object(oid, expected="blob"):
+def get_object(oid, expected:str|None="blob"):
     """
     Returns the contents of a hashed object
 
