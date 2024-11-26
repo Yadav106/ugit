@@ -29,6 +29,22 @@ def write_tree(directory=".") -> str:
 
     return data.hash_object(tree.encode(), "tree")
 
+def _empty_current_dir():
+    for root, dirnames, filenames in os.walk(".", topdown=False):
+        for filename in filenames:
+            path = os.path.relpath(os.path.join(root, filename))
+            if is_ignored(path) or not os.path.isfile(path):
+                continue
+            os.remove(path)
+        for dirname in dirnames:
+            path = os.path.relpath(os.path.join(root, dirname))
+            if is_ignored(path):
+                continue
+            try:
+                os.rmdir(path)
+            except (FileNotFoundError, OSError):
+                pass
+
 def _iter_tree_entries(oid):
     if not oid:
         return
@@ -52,6 +68,7 @@ def get_tree(oid, base_path=""):
     return result
 
 def read_tree(tree_oid):
+    _empty_current_dir()
     for path, oid in get_tree(tree_oid, base_path="./").items():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as f:
